@@ -1,0 +1,47 @@
+name: Agente de Subastas del Estado
+
+# Cuándo se ejecuta el agente
+on:
+  schedule:
+    # Todos los lunes a las 07:00 UTC (09:00 en la España peninsular).
+    # Si lo quieres A DIARIO, cambia la línea de abajo por:  - cron: "0 7 * * 1-5"
+    - cron: "0 7 * * 1"
+  workflow_dispatch:  # botón para lanzarlo a mano cuando quieras
+
+jobs:
+  buscar-subastas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar el agente
+        env:
+          # --- Correo (obligatorio) ---
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          DEST_EMAIL: ${{ secrets.DEST_EMAIL }}
+
+          # --- Ajustes (opcionales) ---
+          # Si corre 1 vez por semana, deja 7. Si lo pones diario, ponlo en 2.
+          VENTANA_DIAS: "7"
+          # "ambos" | "inmuebles" | "vehiculos"
+          TIPO_BIEN: "ambos"
+          # Zona: vacío = toda España. Ej.: "Madrid,Toledo"
+          PROVINCIAS: ""
+          # Palabras que deben aparecer / que descartan (separadas por comas)
+          PALABRAS_CLAVE: ""
+          PALABRAS_EXCLUIR: ""
+          # Precio máximo en euros (0 = sin tope). Requiere ENRIQUECER=1.
+          PRECIO_MAX: "0"
+          # Abrir cada anuncio para clasificar mejor y sacar el importe (más lento)
+          ENRIQUECER: "0"
+        run: python agente_subastas.py
