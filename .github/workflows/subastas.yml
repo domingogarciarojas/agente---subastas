@@ -1,12 +1,11 @@
 name: Agente de Subastas del Estado
 
-# Cuándo se ejecuta el agente
 on:
   schedule:
     # Todos los lunes a las 07:00 UTC (09:00 en la España peninsular).
-    # Si lo quieres A DIARIO, cambia la línea de abajo por:  - cron: "0 7 * * 1-5"
+    # Para recibirlo A DIARIO (lun-vie), cambia por:  - cron: "0 7 * * 1-5"  (y VENTANA_DIAS a "2")
     - cron: "0 7 * * 1"
-  workflow_dispatch:  # botón para lanzarlo a mano cuando quieras
+  workflow_dispatch:   # botón para lanzarlo a mano
 
 jobs:
   buscar-subastas:
@@ -25,23 +24,24 @@ jobs:
 
       - name: Ejecutar el agente
         env:
-          # --- Correo (obligatorio) ---
+          # --- Correo (obligatorio: se ponen como Secrets en GitHub) ---
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           DEST_EMAIL: ${{ secrets.DEST_EMAIL }}
 
-          # --- Ajustes (opcionales) ---
-          # Si corre 1 vez por semana, deja 7. Si lo pones diario, ponlo en 2.
+          # --- Días hacia atrás que se revisan (7 si corre semanal) ---
           VENTANA_DIAS: "7"
-          # "ambos" | "inmuebles" | "vehiculos"
-          TIPO_BIEN: "ambos"
-          # Zona: vacío = toda España. Ej.: "Madrid,Toledo"
-          PROVINCIAS: ""
-          # Palabras que deben aparecer / que descartan (separadas por comas)
-          PALABRAS_CLAVE: ""
-          PALABRAS_EXCLUIR: ""
-          # Precio máximo en euros (0 = sin tope). Requiere ENRIQUECER=1.
-          PRECIO_MAX: "0"
-          # Abrir cada anuncio para clasificar mejor y sacar el importe (más lento)
-          ENRIQUECER: "0"
+
+          # --- TUS FILTROS ---
+          # Zonas (provincia, isla o municipio). Puedes añadir/quitar pueblos.
+          ZONAS: "Barcelona,Huesca,Tenerife,Santa Cruz de Tenerife,Hospitalet,L'Hospitalet,Badalona,Terrassa,Sabadell,Mataró,Jaca,Monzón,Barbastro,Fraga,Sabiñánigo,La Laguna,Arona,Adeje,La Orotava,Granadilla,Puerto de la Cruz"
+
+          # Categorías que quieres recibir (el resto se descarta)
+          CATEGORIAS_ACTIVAS: "residencial,parking,moto,coche"
+
+          # Tope de precio por categoría, en euros (0 = sin tope)
+          PRECIO_MAX_RESIDENCIAL: "100000"   # casas, viviendas, apartamentos
+          PRECIO_MAX_PARKING: "100000"       # parkings y garajes
+          PRECIO_MAX_MOTO: "1000"            # motos
+          PRECIO_MAX_COCHE: "5000"           # coches
         run: python agente_subastas.py
